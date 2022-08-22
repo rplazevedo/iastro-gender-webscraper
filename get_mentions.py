@@ -187,7 +187,7 @@ def main():
         process_data(names_df, prefix)
 
 
-def test():
+def profile():
     import cProfile
     import pstats
 
