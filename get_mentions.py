@@ -5,15 +5,16 @@ Created on Mon Aug 15 16:51:27 2022
 @author: R.P.L. Azevedo
 """
 
-from bs4 import BeautifulSoup as bs
-import requests
-import aiohttp
 import asyncio
-import pandas as pd
 import datetime as dt
-import seaborn as sns
-import matplotlib.pyplot as plt
 import re
+
+import aiohttp
+import matplotlib.pyplot as plt
+import pandas as pd
+import requests
+import seaborn as sns
+from bs4 import BeautifulSoup as bs
 
 
 def number_arts_with_name(name: str, list_of_art: list[str]) -> int:
