@@ -5,7 +5,7 @@ Created on Mon Aug 15 16:51:27 2022
 @author: R.P.L. Azevedo
 """
 
-from bs4 import BeautifulSoup as BS
+from bs4 import BeautifulSoup as bs
 import requests
 import aiohttp
 import asyncio
@@ -20,12 +20,12 @@ def number_arts_with_name(name: str, list_of_art: list[str]) -> int:
     """Checks in how many articles a person is mentioned"""
     name_split = name.split()
     search_pattern = r'(' + name_split[0] + \
-        r') *(?:\w*\.?-? *){0,4} *(' + name_split[-1] + r')'
+                     r') *(?:\w*\.?-? *){0,4} *(' + name_split[-1] + r')'
     name_search = re.compile(search_pattern)
     n = 0
     for art in list_of_art:
         result = name_search.findall(art)
-        if result != []:
+        if result:
             n += 1
     return n
 
@@ -38,14 +38,14 @@ async def get_article(session: aiohttp.ClientSession, url: str) -> str:
 
 
 async def clean_article(html: str, session: aiohttp.ClientSession) -> str:
-    soup = BS(html, "lxml")
+    soup = bs(html, "lxml")
     article_body = soup.find('div', {"class": "entry-content"})
     url_el = soup.find('a', string="Saber mais »")
     if url_el:
         url = url_el['href']
         async with session.get(url) as resp:
             resp = await resp.text()
-            soup = BS(resp, "lxml")
+            soup = bs(resp, "lxml")
             article_body = soup.find('div', {"class": "newsContent"})
     article_text = article_body.text
     article_clean = article_text.partition(
@@ -59,7 +59,7 @@ async def get_article_urls(session: aiohttp.ClientSession, url: str) \
         -> list[tuple[str, str]]:
     async with session.get(url) as resp:
         page = await resp.text()
-        soup = BS(page, "lxml")
+        soup = bs(page, "lxml")
         articles = soup.find_all('article', {"class": "genaral-post-item"})
         date_url_list = []
         for article in articles:
@@ -72,7 +72,7 @@ async def get_article_urls(session: aiohttp.ClientSession, url: str) \
                     'div', {"class": "event-entry-datetime"})
                 if date_element is not None:
                     re_date = re.findall(r'\d{4}', date_element.text)
-                    if re_date != []:
+                    if re_date:
                         date = re_date[0]
                     else:
                         date = str(dt.datetime.now().year)
@@ -87,12 +87,12 @@ async def get_urls(main_url: str) -> list[tuple[str, str]]:
                 as session):
         tasks = []
         text = requests.get(main_url).text
-        soup = BS(text, "lxml")
+        soup = bs(text, "lxml")
         n_pages = int(soup.find_all('a', {"class": "page-numbers"})[-2].text)
         if main_url[-1] != '/':
             main_url = main_url + '/'
-        for number in range(1, n_pages+1):
-            url = main_url+f'page/{number}'
+        for number in range(1, n_pages + 1):
+            url = main_url + f'page/{number}'
             tasks.append(asyncio.create_task(get_article_urls(session, url)))
         temp_date_url_list = await asyncio.gather(*tasks)
         date_url_list = []
@@ -121,8 +121,8 @@ async def get_data(main_url: str, table_loc: str, file_prefix: str):
     news_df["text"] = article_list
 
     names_df = pd.read_csv(table_loc)
-    currentYear = dt.datetime.now().year
-    for year in range(2014, currentYear+1):
+    current_year = dt.datetime.now().year
+    for year in range(2014, current_year + 1):
         temp_list = []
         for name in names_df["Name"]:
             n_mentions = number_arts_with_name(
@@ -130,7 +130,7 @@ async def get_data(main_url: str, table_loc: str, file_prefix: str):
             temp_list.append(n_mentions)
         names_df[str(year)] = temp_list
 
-    cols = [str(year) for year in range(2014, currentYear+1)]
+    cols = [str(year) for year in range(2014, current_year + 1)]
     names_df['total'] = names_df[cols].sum(axis=1)
     names_df['gender'].fillna('unknown', inplace=True)
     names_df.to_csv(f"{file_prefix}_mention_data.csv")
@@ -145,7 +145,7 @@ def process_data(data: pd.DataFrame, file_prefix: str):
     f.tight_layout()
     f.savefig(f"{file_prefix}_total_mentions")
 
-    year_list = [str(year) for year in range(2014, dt.datetime.now().year+1)]
+    year_list = [str(year) for year in range(2014, dt.datetime.now().year + 1)]
     m_list = [data[data["gender"] == "m"][year].sum()
               for year in year_list]
     f_list = [data[data["gender"] == "f"][year].sum()
@@ -157,14 +157,14 @@ def process_data(data: pd.DataFrame, file_prefix: str):
     gender_mentions_df = pd.DataFrame(data=d)
     gender_mentions_df.head()
     gender_mentions_df['m (%)'] = 100 * gender_mentions_df['m'] / (
-        gender_mentions_df['m'] + gender_mentions_df['f'])
+            gender_mentions_df['m'] + gender_mentions_df['f'])
     gender_mentions_df['f (%)'] = 100 * gender_mentions_df['f'] / (
-        gender_mentions_df['m'] + gender_mentions_df['f'])
+            gender_mentions_df['m'] + gender_mentions_df['f'])
     gender_mentions_df.to_csv(f"{file_prefix}_gender_mention_data.csv")
 
     gender_mentions_df = gender_mentions_df[(gender_mentions_df['m'] > 0) |
                                             (gender_mentions_df['f'] > 0)]
-    f, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10), sharex=True)
+    f, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10), sharex="True")
     gender_mentions_df.plot(x='year', y=['m (%)', 'f (%)'], ax=ax1)
     ax1.set_ylabel('% of mentions')
     gender_mentions_df.plot(x='year', y=['m', 'f'], ax=ax2)
