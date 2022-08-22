@@ -1,4 +1,3 @@
-.csv
-.png
-.json
-.prof
+*.csv
+*.png
+*.prof
